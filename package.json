@@ -3,22 +3,40 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "docker compose up -d postgres",
     "dev": "next dev",
+    "prestart": "docker compose up -d postgres",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:setup": "docker compose up -d postgres && prisma migrate dev",
+    "bootstrap:owner": "tsx scripts/bootstrap-owner.ts",
+    "email:check": "tsx scripts/check-email.ts",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.1066.0",
+    "@prisma/client": "^6.16.2",
     "next": "16.2.9",
+    "nodemailer": "^8.0.11",
+    "prisma": "^6.16.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }
