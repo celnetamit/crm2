@@ -45,6 +45,20 @@ The database listens on `127.0.0.1:54321` with:
 
 The current launch plan lives in [docs/LAUNCH_READINESS_PLAN.md](/home/itb09/Desktop/projects/crm2/docs/LAUNCH_READINESS_PLAN.md).
 The UX and information-architecture audit lives in [docs/UX_INFORMATION_ARCHITECTURE_AUDIT.md](/home/itb09/Desktop/projects/crm2/docs/UX_INFORMATION_ARCHITECTURE_AUDIT.md).
+The Coolify deployment guide lives in [docs/COOLIFY_DEPLOYMENT.md](/home/itb09/Desktop/projects/crm2/docs/COOLIFY_DEPLOYMENT.md).
+
+### Quick Deploy
+
+1. Connect the Git repo in Coolify and deploy the `main` branch.
+2. Add a PostgreSQL database and set `DATABASE_URL`.
+3. Set `APP_URL`, `SESSION_SECRET` (32+ chars), `ALLOW_DEMO_SEEDING=false`, and `NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS=false`.
+4. Set email delivery vars with SMTP or AWS SES.
+5. Build with `npm ci && npm run prisma:generate && npm run build`.
+6. Start with `npx next start -p $PORT` instead of `npm run start`.
+7. Run `npx prisma migrate deploy`.
+8. Bootstrap the first owner with `npm run bootstrap:owner`.
+9. Verify email with `npm run email:check`.
+10. Smoke test Customers, Follow-ups, Deals, Billing, Team, and Settings.
 
 Production hardening now assumes:
 
@@ -79,8 +93,6 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For Coolify, follow [docs/COOLIFY_DEPLOYMENT.md](/home/itb09/Desktop/projects/crm2/docs/COOLIFY_DEPLOYMENT.md).
