@@ -1,86 +1,54 @@
 import { completeTaskAction, createTaskAction, deleteTaskAction, updateTaskAction } from "@/app/actions";
+import { HelpTip } from "@/components/help-tip";
 import { getDealsData, getTasksData, getShellData } from "@/lib/crm";
 
-export default async function TasksPage() {
+type TasksPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function TasksPage({ searchParams }: TasksPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const accountIdFilter = firstValue(resolvedSearchParams.accountId) ?? "";
+  const contactIdFilter = firstValue(resolvedSearchParams.contactId) ?? "";
+  const dealIdFilter = firstValue(resolvedSearchParams.dealId) ?? "";
   const [{ session }, tasks, dealData] = await Promise.all([getShellData(), getTasksData(), getDealsData()]);
   const canManage = session.role !== "MEMBER";
-  const openTasks = tasks.filter((task) => task.status === "PENDING").length;
-  const completedTasks = tasks.filter((task) => task.status === "COMPLETED").length;
+  const visibleTasks = tasks.filter((task) => {
+    if (accountIdFilter && task.accountId !== accountIdFilter) return false;
+    if (contactIdFilter && task.contactId !== contactIdFilter) return false;
+    if (dealIdFilter && task.dealId !== dealIdFilter) return false;
+    return true;
+  });
+  const openTasks = visibleTasks.filter((task) => task.status === "PENDING").length;
+  const completedTasks = visibleTasks.filter((task) => task.status === "COMPLETED").length;
+  const activeFilters = [
+    accountIdFilter ? "customer" : null,
+    contactIdFilter ? "person" : null,
+    dealIdFilter ? "deal" : null,
+  ].filter((value): value is string => Boolean(value));
 
   return (
     <div className="page-grid">
-      <section className="hero-panel dashboard-hero">
-        <div className="hero-body">
-          <div className="hero-copy">
+      <section className="panel">
+        <div className="panel-header">
+          <div>
             <div className="eyebrow">Follow-ups</div>
-            <h2>Task queue with a lighter planning surface.</h2>
-            <p>
-              Keep follow-ups visible, sort by status, and update work without the heavy visual treatment.
-            </p>
+            <h2>Task index</h2>
+            <div className="deal-meta">
+              Keep follow-ups visible, filter by customer or deal, and open the list when you need to update work.
+            </div>
           </div>
-
-          <div className="hero-actions">
-            <div className="chip">{tasks.length} total tasks</div>
-            <div className="chip">{openTasks} open</div>
-            <div className="chip">{completedTasks} completed</div>
-          </div>
-
-          <div className="metric-strip">
-            <article className="metric-card">
-              <div className="eyebrow">Total</div>
-              <div className="metric-value">{tasks.length}</div>
-              <div className="deal-meta">Scheduled follow-ups</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Open</div>
-              <div className="metric-value">{openTasks}</div>
-              <div className="deal-meta">Need attention</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Done</div>
-              <div className="metric-value">{completedTasks}</div>
-              <div className="deal-meta">Completed actions</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Owners</div>
-              <div className="metric-value">{dealData.users.length}</div>
-              <div className="deal-meta">Assignable teammates</div>
-            </article>
+          <div className="chip-row">
+            <span className="chip">{visibleTasks.length} tasks</span>
+            <span className="chip">{openTasks} open</span>
+            <span className="chip">{completedTasks} completed</span>
+            <span className="chip">{dealData.users.length} owners</span>
           </div>
         </div>
-
-        <aside className="hero-rail">
-          <article className="profile-panel">
-            <div className="profile-head">
-              <div className="profile-avatar">{session.name.slice(0, 1).toUpperCase()}</div>
-              <div className="profile-copy">
-                <h3>{session.organizationName}</h3>
-                <span>Task planning</span>
-              </div>
-            </div>
-            <div className="profile-meta">
-              <div className="deal-meta">Queue health</div>
-              <div className="profile-track">
-                <span style={{ width: "59%" }} />
-              </div>
-              <div className="deal-meta">{dealData.accounts.length} accounts can feed the follow-up queue.</div>
-            </div>
-            <div className="profile-stats">
-              <div className="profile-stat">
-                <strong>{dealData.accounts.length}</strong>
-                <span>Accounts</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{dealData.contacts.length}</strong>
-                <span>Contacts</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{dealData.deals.length}</strong>
-                <span>Deals</span>
-              </div>
-            </div>
-          </article>
-        </aside>
       </section>
 
       <section className="panel">
@@ -92,20 +60,25 @@ export default async function TasksPage() {
         </div>
 
         <div className="stack">
-          {tasks.map((task) => (
+          {visibleTasks.length > 0 && activeFilters.length > 0 ? (
+            <div className="deal-meta">
+              Showing follow-ups for {activeFilters.length === 1 ? `a ${activeFilters[0]}` : activeFilters.join(" and ")}.
+            </div>
+          ) : null}
+          {visibleTasks.map((task) => (
             <article key={task.id} className="row-card">
               <div className="row-card-top">
                 <div>
                   <strong>{task.title}</strong>
                   <div className="deal-meta">
-                    {task.account?.name ?? "No account"} · {task.assignedTo.name}
+                    {task.account?.name ?? "No customer"} · {task.deal?.name ?? "No deal"} · {task.assignedTo.name}
                   </div>
                 </div>
                 <span className={`badge status-${task.status.toLowerCase()}`}>{task.status}</span>
               </div>
               <div className="deal-meta">{task.notes ?? "No notes"}</div>
               <div className="deal-meta">
-                Due {new Date(task.dueAt).toLocaleString()} · {task.contact?.name ?? "No contact"}
+                Due {new Date(task.dueAt).toLocaleString()} · {task.contact?.name ?? "No person"}
               </div>
               <form action={completeTaskAction} className="inline-form">
                 <input type="hidden" name="taskId" value={task.id} />
@@ -122,7 +95,7 @@ export default async function TasksPage() {
                     <label className="field">
                       <span>Account</span>
                       <select name="accountId" className="select" defaultValue={task.accountId ?? ""}>
-                        <option value="">Optional account</option>
+                        <option value="">Optional customer</option>
                         {dealData.accounts.map((account) => (
                           <option key={account.id} value={account.id}>
                             {account.name}
@@ -133,7 +106,7 @@ export default async function TasksPage() {
                     <label className="field">
                       <span>Contact</span>
                       <select name="contactId" className="select" defaultValue={task.contactId ?? ""}>
-                        <option value="">Optional contact</option>
+                        <option value="">Optional person</option>
                         {dealData.contacts.map((contact) => (
                           <option key={contact.id} value={contact.id}>
                             {contact.name}
@@ -176,7 +149,9 @@ export default async function TasksPage() {
                       />
                     </label>
                     <label className="field">
-                      <span>Status</span>
+                      <span>
+                        Status <HelpTip label="Choose the task state: pending, completed, or cancelled." />
+                      </span>
                       <select name="status" className="select" defaultValue={task.status}>
                         <option value="PENDING">Pending</option>
                         <option value="COMPLETED">Completed</option>
@@ -203,7 +178,7 @@ export default async function TasksPage() {
               ) : null}
             </article>
           ))}
-          {tasks.length === 0 ? <div className="empty-state">No tasks created yet.</div> : null}
+          {visibleTasks.length === 0 ? <div className="empty-state">No follow-ups match this view yet.</div> : null}
         </div>
       </section>
 
@@ -217,9 +192,11 @@ export default async function TasksPage() {
 
         <form action={createTaskAction} className="stack">
           <label className="field">
-            <span>Account</span>
+            <span>
+              Customer <HelpTip label="Attach this follow-up to a customer record." />
+            </span>
             <select name="accountId" className="select" defaultValue="">
-              <option value="">Optional account</option>
+              <option value="">Optional customer</option>
               {dealData.accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name}
@@ -229,9 +206,11 @@ export default async function TasksPage() {
           </label>
 
           <label className="field">
-            <span>Contact</span>
+            <span>
+              Person <HelpTip label="Attach this follow-up to a specific person on the customer record." />
+            </span>
             <select name="contactId" className="select" defaultValue="">
-              <option value="">Optional contact</option>
+              <option value="">Optional person</option>
               {dealData.contacts.map((contact) => (
                 <option key={contact.id} value={contact.id}>
                   {contact.name}
@@ -241,7 +220,9 @@ export default async function TasksPage() {
           </label>
 
           <label className="field">
-            <span>Deal</span>
+            <span>
+              Deal <HelpTip label="Link this follow-up to a deal so it appears in the pipeline context." />
+            </span>
             <select name="dealId" className="select" defaultValue="">
               <option value="">Optional deal</option>
               {dealData.deals.map((deal) => (
@@ -253,10 +234,12 @@ export default async function TasksPage() {
           </label>
 
           <label className="field">
-            <span>Assign to</span>
+            <span>
+              Assign to <HelpTip label="Pick the teammate who will own and complete this follow-up." />
+            </span>
             <select name="assignedToId" className="select" required defaultValue="">
               <option value="" disabled>
-                Choose member
+                Choose teammate
               </option>
               {dealData.users.map((user) => (
                 <option key={user.id} value={user.id}>

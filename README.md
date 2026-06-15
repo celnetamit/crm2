@@ -44,6 +44,7 @@ The database listens on `127.0.0.1:54321` with:
 ## Launch Readiness
 
 The current launch plan lives in [docs/LAUNCH_READINESS_PLAN.md](/home/itb09/Desktop/projects/crm2/docs/LAUNCH_READINESS_PLAN.md).
+The UX and information-architecture audit lives in [docs/UX_INFORMATION_ARCHITECTURE_AUDIT.md](/home/itb09/Desktop/projects/crm2/docs/UX_INFORMATION_ARCHITECTURE_AUDIT.md).
 
 Production hardening now assumes:
 

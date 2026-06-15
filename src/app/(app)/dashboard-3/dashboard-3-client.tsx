@@ -99,95 +99,69 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
       {/* LEFT COLUMN */}
       <div className="dashboard-card-section" style={{ gridColumn: "span 2" }}>
         
-        {/* Today's Sales Banner */}
+        {/* Workspace summary */}
         <div className="sales-banner-card">
           <div className="sales-banner-info">
-            <h2>Workspace Snapshot</h2>
-            <p>Welcome back, {session.name}! This view now reflects live revenue, tasks, and account health from the database.</p>
+            <h2>Workspace summary</h2>
+            <p>Welcome back, {session.name}. This view shows live revenue, tasks, and customer health.</p>
           </div>
           <button
             type="button"
             className="export-btn"
-            onClick={() => alert("Exporting sales report for today...")}
+            onClick={() => alert("Exporting workspace summary...")}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
             </svg>
-            <span>Export Report</span>
+            <span>Export summary</span>
           </button>
         </div>
 
-        {/* Four Colorful KPI Cards */}
-        <div className="today-stats-grid">
-          {/* Today's Sales */}
-          <div className="today-stat-card red">
-            <div className="today-stat-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
-              </svg>
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <div className="eyebrow">Workspace summary</div>
+              <h2>Key metrics</h2>
             </div>
-            <div className="today-stat-val">{formatVal(analytics.counts.paidInvoicesValue || 185000)}</div>
-            <div className="today-stat-label">Paid Revenue</div>
-            <div className="today-stat-desc">Live paid invoice total</div>
-            <span className="badge status-active" style={{ marginTop: "8px" }}>
-              {weeklyRevenueDelta >= 0 ? "+" : ""}
-              {weeklyRevenueDelta}% vs prior week
-            </span>
-          </div>
-
-          {/* Total Orders */}
-          <div className="today-stat-card orange">
-            <div className="today-stat-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
+            <div className="chip-row">
+              <span className="chip">{formatVal(analytics.counts.paidInvoicesValue || 185000)} revenue</span>
+              <span className="chip">{analytics.counts.invoices || 5} invoices</span>
+              <span className="chip">{analytics.counts.wonDeals || 2} deals</span>
+              <span className="chip">{analytics.counts.accounts} customers</span>
             </div>
-            <div className="today-stat-val">{analytics.counts.invoices || 5} Orders</div>
-            <div className="today-stat-label">Invoices</div>
-            <div className="today-stat-desc">Live invoice count</div>
-            <span className="badge status-warning" style={{ marginTop: "8px" }}>
-              Tasks {taskDelta >= 0 ? "+" : ""}
-              {taskDelta}% week-over-week
-            </span>
           </div>
-
-          {/* Product Sold */}
-          <div className="today-stat-card green">
-            <div className="today-stat-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              </svg>
-            </div>
-            <div className="today-stat-val">{analytics.counts.wonDeals || 2} deals</div>
-            <div className="today-stat-label">Won Deals</div>
-            <div className="today-stat-desc">Closed opportunities</div>
-            <span className="badge status-active" style={{ marginTop: "8px" }}>
-              {analytics.counts.wonDeals} closed deals
-            </span>
-          </div>
-
-          {/* New Customer */}
-          <div className="today-stat-card purple">
-            <div className="today-stat-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-            </div>
-            <div className="today-stat-val">{analytics.counts.accounts} Companies</div>
-            <div className="today-stat-label">Accounts</div>
-            <div className="today-stat-desc">Organization accounts</div>
-            <span className="badge status-warning" style={{ marginTop: "8px" }}>
-              {healthDelta >= 0 ? "+" : ""}
-              {healthDelta} pts health
-            </span>
-          </div>
-        </div>
+          <table className="popular-items-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Paid revenue</td>
+                <td>{formatVal(analytics.counts.paidInvoicesValue || 185000)}</td>
+                <td>{weeklyRevenueDelta >= 0 ? "+" : ""}{weeklyRevenueDelta}% vs prior week</td>
+              </tr>
+              <tr>
+                <td>Invoices</td>
+                <td>{analytics.counts.invoices || 5}</td>
+                <td>{taskDelta >= 0 ? "+" : ""}{taskDelta}% week-over-week</td>
+              </tr>
+              <tr>
+                <td>Won deals</td>
+                <td>{analytics.counts.wonDeals || 2}</td>
+                <td>{analytics.counts.wonDeals} closed deals</td>
+              </tr>
+              <tr>
+                <td>Customers</td>
+                <td>{analytics.counts.accounts}</td>
+                <td>{healthDelta >= 0 ? "+" : ""}{healthDelta} pts health</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
         {/* Dashboard 3 Layout row 1 */}
         <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: "24px", marginTop: "8px" }}>
@@ -287,7 +261,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
                   return (
                     <tr key={account.id}>
                       <td>
-                        <Link href={`/accounts/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
+                        <Link href={`/customers/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
                           {account.name}
                         </Link>
                       </td>
@@ -309,7 +283,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
               </tbody>
             </table>
             <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-              <Link href="/accounts?view=churn-risk" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/customers?view=churn-risk" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 Open risk view
               </Link>
             </div>
@@ -363,7 +337,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
             </div>
 
             <div className="nested-card" style={{ padding: "10px", textAlign: "center", fontSize: "0.82rem" }}>
-              Hover points to inspect live account health scores.
+              Hover points to inspect live customer health scores.
             </div>
           </div>
         </div>
@@ -373,7 +347,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
           <div className="glass-card-header">
             <div className="glass-card-title">
               <h3>Details Drawer</h3>
-              <span>Compact review for accounts and tasks</span>
+              <span>Compact review for customers and tasks</span>
             </div>
             {selectedInsight && (
               <button type="button" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.8rem" }} onClick={() => setSelectedInsight(null)}>
@@ -400,7 +374,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
                 </span>
                 <span className={`badge ${selectedInsight.item.status === "AT_RISK" ? "status-overdue" : "status-active"}`}>{selectedInsight.item.status ?? "OPEN"}</span>
               </div>
-              <Link href={`/accounts/${selectedInsight.item.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+              <Link href={`/customers/${selectedInsight.item.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                 View in details
               </Link>
             </div>
@@ -412,12 +386,12 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <span className="badge status-warning">{selectedInsight.item.assignedTo?.name ?? "Unassigned"}</span>
                 {selectedInsight.item.account ? (
-                  <Link href={`/accounts/${selectedInsight.item.account.id}`} className="badge" style={{ borderColor: "#3b82f6", color: "#3b82f6" }}>
+                  <Link href={`/customers/${selectedInsight.item.account.id}`} className="badge" style={{ borderColor: "#3b82f6", color: "#3b82f6" }}>
                     {selectedInsight.item.account.name}
                   </Link>
                 ) : null}
               </div>
-              <Link href="/tasks" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+              <Link href="/follow-ups" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                 View in details
               </Link>
             </div>
@@ -501,7 +475,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
                   return (
                     <tr key={account.id}>
                       <td>
-                        <Link href={`/accounts/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
+                        <Link href={`/customers/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
                           {account.name}
                         </Link>
                       </td>
@@ -523,7 +497,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
               </tbody>
             </table>
             <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-              <Link href="/accounts?view=churn-risk" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/customers?view=churn-risk" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 Open risk view
               </Link>
             </div>
@@ -588,7 +562,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
                     </td>
                     <td>
                       {task.account ? (
-                        <Link href={`/accounts/${task.account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
+                        <Link href={`/customers/${task.account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
                           {task.account.name}
                         </Link>
                       ) : (
@@ -607,7 +581,7 @@ export default function Dashboard3Client({ session, data, analytics }: Dashboard
               </tbody>
             </table>
             <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-              <Link href="/tasks" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/follow-ups" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 Open tasks
               </Link>
             </div>

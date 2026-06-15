@@ -53,77 +53,26 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
 
   return (
     <div className="page-grid">
-      <section className="hero-panel dashboard-hero">
-        <div className="hero-body">
-          <div className="hero-copy">
+      <section className="panel">
+        <div className="panel-header">
+          <div>
             <div className="eyebrow">Customer profile</div>
             <h2>{account.name}</h2>
-            <p>{account.profileSummary ?? account.notes ?? "No summary has been added for this customer yet."}</p>
+            <div className="deal-meta">
+              {account.profileSummary ?? account.notes ?? "No summary has been added for this customer yet."}
+            </div>
           </div>
-          <div className="hero-actions">
-            <Link href="/accounts" className="secondary-button">
-              Back to accounts
+          <div className="chip-row">
+            <Link href="/customers" className="secondary-button">
+              Back to customers
             </Link>
             <div className="chip">Owner {account.owner?.name ?? "Unassigned"}</div>
             <div className={`chip status-${getHealthTone(account.healthScore)}`}>Health {account.healthScore ?? "N/A"}</div>
             <div className="chip">{profileCompleteness}% complete</div>
-          </div>
-          <div className="metric-strip">
-            <article className="metric-card">
-              <div className="eyebrow">Revenue</div>
-              <div className="metric-value">{formatMoney(account.annualRevenue)}</div>
-              <div className="deal-meta">Commercial potential</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Contacts</div>
-              <div className="metric-value">{account._count.contacts}</div>
-              <div className="deal-meta">Mapped stakeholders</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Deals</div>
-              <div className="metric-value">{account._count.deals}</div>
-              <div className="deal-meta">Pipeline items</div>
-            </article>
-            <article className="metric-card">
-              <div className="eyebrow">Review</div>
-              <div className="metric-value">{formatDate(account.nextReviewAt)}</div>
-              <div className="deal-meta">Refresh window</div>
-            </article>
+            <div className="chip">{account._count.contacts} people</div>
+            <div className="chip">{account._count.deals} deals</div>
           </div>
         </div>
-
-        <aside className="hero-rail">
-          <article className="profile-panel">
-            <div className="profile-head">
-              <div className="profile-avatar">{account.name.slice(0, 1).toUpperCase()}</div>
-              <div className="profile-copy">
-                <h3>{account.lifecycleStage ?? "Lifecycle not set"}</h3>
-                <span>{account.segment ?? "No segment"}</span>
-              </div>
-            </div>
-            <div className="profile-meta">
-              <div className="deal-meta">Profile completeness</div>
-              <div className="profile-track">
-                <span style={{ width: `${profileCompleteness}%` }} />
-              </div>
-              <div className="deal-meta">{profileCompleteness}% of the account profile is populated.</div>
-            </div>
-            <div className="profile-stats">
-              <div className="profile-stat">
-                <strong>{account.contacts.length}</strong>
-                <span>Contacts</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{account.tasks.length}</strong>
-                <span>Tasks</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{account.invoices.length}</strong>
-                <span>Invoices</span>
-              </div>
-            </div>
-          </article>
-        </aside>
       </section>
 
       <section className="stats-grid">
@@ -148,7 +97,7 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
           <div className="deal-meta">{account.owner?.name ?? "Unassigned"} · {account.source ?? "Source not set"}</div>
         </article>
         <article className="stat-card">
-          <div className="eyebrow">Contacts</div>
+          <div className="eyebrow">People</div>
           <div className="stat-value">{account._count.contacts}</div>
           <div className="deal-meta">Stakeholders mapped</div>
         </article>
@@ -204,16 +153,16 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel" id="people">
           <div className="panel-header">
             <div>
-              <div className="eyebrow">Contacts</div>
+              <div className="eyebrow">People</div>
               <h2>People and influence map</h2>
             </div>
           </div>
           <div className="stack">
             {account.contacts.map((contact) => (
-              <article key={contact.id} className="row-card">
+              <article key={contact.id} id={`person-${contact.id}`} className="row-card">
                 <div className="row-card-top">
                   <div>
                     <strong>{contact.name}</strong>
@@ -231,11 +180,11 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
                 {contact.notes ? <div className="deal-meta">{contact.notes}</div> : null}
                 {canManage ? (
                   <details className="edit-block">
-                    <summary>Edit contact</summary>
+                    <summary>Edit person</summary>
                     <form action={updateContactAction} className="stack compact-form">
                       <input type="hidden" name="contactId" value={contact.id} />
                       <label className="field">
-                        <span>Account</span>
+                        <span>Customer</span>
                         <select name="accountId" className="select" defaultValue={account.id}>
                           {accountDirectory.map((candidate) => (
                             <option key={candidate.id} value={candidate.id}>
@@ -308,7 +257,7 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
                 ) : null}
               </article>
             ))}
-            {account.contacts.length === 0 ? <div className="empty-state">No contacts mapped yet.</div> : null}
+            {account.contacts.length === 0 ? <div className="empty-state">No people mapped yet.</div> : null}
           </div>
         </section>
       </div>
@@ -330,13 +279,13 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
                     <div>
                       <strong>{deal.name}</strong>
                       <div className="deal-meta">
-                        {deal.stage.name} · {deal.contact?.name ?? "No primary contact"}
+                        {deal.stage.name} · {deal.contact?.name ?? "No primary person"}
                       </div>
                     </div>
                     <div className="deal-meta">{formatMoney(deal.value)}</div>
                   </div>
                 ))}
-                {account.deals.length === 0 ? <div className="deal-meta">No deals on this account.</div> : null}
+                {account.deals.length === 0 ? <div className="deal-meta">No deals on this customer.</div> : null}
               </div>
             </div>
             <div className="nested-card">
@@ -353,7 +302,7 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
                     <div className="deal-meta">{formatDate(task.dueAt)}</div>
                   </div>
                 ))}
-                {account.tasks.length === 0 ? <div className="deal-meta">No tasks on this account.</div> : null}
+                {account.tasks.length === 0 ? <div className="deal-meta">No tasks on this customer.</div> : null}
               </div>
             </div>
             <div className="nested-card">
@@ -504,7 +453,7 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
         <div className="panel-header">
           <div>
             <div className="eyebrow">Timeline</div>
-            <h2>Recent account history</h2>
+            <h2>Recent customer history</h2>
           </div>
         </div>
         <div className="stack">
@@ -522,23 +471,23 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
               <div className="deal-meta">{event.details ?? "No details"}</div>
             </article>
           ))}
-          {auditEvents.length === 0 ? <div className="empty-state">No account activity has been logged yet.</div> : null}
+          {auditEvents.length === 0 ? <div className="empty-state">No customer activity has been logged yet.</div> : null}
         </div>
       </section>
 
       {canManage ? (
-        <section className="panel">
+        <section className="panel" id="edit-customer">
           <div className="panel-header">
             <div>
               <div className="eyebrow">Admin</div>
-              <h2>Edit account profile</h2>
+              <h2>Edit customer profile</h2>
             </div>
           </div>
           <form action={updateAccountAction} className="stack">
             <input type="hidden" name="accountId" value={account.id} />
             <div className="two-up">
               <label className="field">
-                <span>Account owner</span>
+                <span>Customer owner</span>
                 <select name="ownerUserId" className="select" defaultValue={account.owner?.id ?? ""}>
                   <option value="">Unassigned</option>
                   {teamOptions.map((member) => (
@@ -638,7 +587,7 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
           <form action={deleteAccountAction} className="inline-actions danger-row">
             <input type="hidden" name="accountId" value={account.id} />
             <button type="submit" className="danger-button" disabled={account._count.invoices > 0}>
-              Delete account
+              Delete customer
             </button>
             {account._count.invoices > 0 ? <span className="deal-meta">Remove invoices first before deleting.</span> : null}
           </form>

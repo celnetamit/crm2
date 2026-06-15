@@ -9,7 +9,7 @@ import Dashboard3Client from "./dashboard-3-client";
 
 export const metadata: Metadata = {
   title: "Customer Health & Operations",
-  description: "Operational snapshot for account health, task volume, and weekly movement.",
+  description: "Operational snapshot for customer health, task volume, and weekly movement.",
 };
 
 export default async function Dashboard3Page() {

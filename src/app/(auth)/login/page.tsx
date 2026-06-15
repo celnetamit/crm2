@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { loginAction } from "@/app/actions";
+import { loginAction, type LoginActionState } from "@/app/actions";
 
 export default function LoginPage() {
   const showDemoCredentials =
     process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === "true" ||
     (process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS !== "false");
-  const [state, action, pending] = useActionState(loginAction, null);
+  const [state, action, pending] = useActionState(loginAction, { success: false } as LoginActionState);
   const router = useRouter();
 
   useEffect(() => {
-    if (state?.success) {
+    if (state.success) {
       router.push("/");
       router.refresh();
     }

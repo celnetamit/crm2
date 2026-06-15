@@ -108,7 +108,9 @@ function buildCsvErrorReport(kind: "accounts" | "contacts", details: string[]) {
   };
 }
 
-export async function loginAction(_prevState: { error?: string; success?: boolean } | null, formData: FormData) {
+export type LoginActionState = { error?: string; success?: boolean };
+
+export async function loginAction(_prevState: LoginActionState, formData: FormData): Promise<LoginActionState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) {
@@ -116,7 +118,7 @@ export async function loginAction(_prevState: { error?: string; success?: boolea
   }
 
   const result = await loginWithCredentials(email, password);
-  if ("error" in result) return result;
+  if ("error" in result) return { error: result.error };
   revalidatePath("/login");
   return { success: true };
 }
@@ -516,17 +518,17 @@ export async function importAccountsCsvAction(
 ) {
   const file = formData.get("csvFile");
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose an accounts CSV file first." };
+    return { error: "Choose a customers CSV file first." };
   }
 
   const result = await importAccountsCsv(await file.text());
   if (!result) {
-    return { error: "Accounts import is only available to owners and admins." };
+    return { error: "Customers import is only available to owners and admins." };
   }
   refreshWorkspace();
   const report = buildCsvErrorReport("accounts", result.errors);
   return {
-    success: `Accounts import finished. Created ${result.created}, updated ${result.updated}, skipped ${result.skipped}.`,
+    success: `Customers import finished. Created ${result.created}, updated ${result.updated}, skipped ${result.skipped}.`,
     details: result.errors.slice(0, 10),
     reportCsv: report?.csv,
     reportFileName: report?.fileName,
@@ -539,17 +541,17 @@ export async function importContactsCsvAction(
 ) {
   const file = formData.get("csvFile");
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose a contacts CSV file first." };
+    return { error: "Choose a people CSV file first." };
   }
 
   const result = await importContactsCsv(await file.text());
   if (!result) {
-    return { error: "Contacts import is only available to owners and admins." };
+    return { error: "People import is only available to owners and admins." };
   }
   refreshWorkspace();
   const report = buildCsvErrorReport("contacts", result.errors);
   return {
-    success: `Contacts import finished. Created ${result.created}, updated ${result.updated}, skipped ${result.skipped}.`,
+    success: `People import finished. Created ${result.created}, updated ${result.updated}, skipped ${result.skipped}.`,
     details: result.errors.slice(0, 10),
     reportCsv: report?.csv,
     reportFileName: report?.fileName,

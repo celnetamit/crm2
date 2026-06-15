@@ -1485,6 +1485,106 @@ export async function getBillingData() {
   ]);
 }
 
+export async function getWorkspaceSearchData(query: string) {
+  const { organizationId } = await resolveWorkspace();
+  const term = query.trim();
+  if (!term) {
+    return {
+      query: term,
+      accounts: [],
+      contacts: [],
+      deals: [],
+      invoices: [],
+      tasks: [],
+      users: [],
+    };
+  }
+
+  const contains = { contains: term, mode: "insensitive" as const };
+
+  const [accounts, contacts, deals, invoices, tasks, users] = await Promise.all([
+    prisma.account.findMany({
+      where: {
+        organizationId,
+        OR: [
+          { name: contains },
+          { industry: contains },
+          { segment: contains },
+          { notes: contains },
+          { profileSummary: contains },
+        ],
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+    }),
+    prisma.contact.findMany({
+      where: {
+        organizationId,
+        OR: [{ name: contains }, { title: contains }, { role: contains }, { email: contains }, { phone: contains }],
+      },
+      orderBy: { updatedAt: "desc" },
+      include: { account: true },
+      take: 20,
+    }),
+    prisma.deal.findMany({
+      where: {
+        organizationId,
+        OR: [{ name: contains }, { notes: contains }, { currency: contains }],
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        account: true,
+        contact: true,
+        stage: true,
+        owner: true,
+      },
+      take: 20,
+    }),
+    prisma.invoice.findMany({
+      where: {
+        organizationId,
+        OR: [{ invoiceNumber: contains }, { recipientEmail: contains }, { notes: contains }],
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        account: true,
+        deal: true,
+        createdBy: true,
+      },
+      take: 20,
+    }),
+    prisma.task.findMany({
+      where: {
+        organizationId,
+        OR: [{ title: contains }, { notes: contains }],
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        account: true,
+        contact: true,
+        deal: true,
+        assignedTo: true,
+      },
+      take: 20,
+    }),
+    prisma.membership.findMany({
+      where: {
+        organizationId,
+        user: {
+          OR: [{ name: contains }, { email: contains }],
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        user: true,
+      },
+      take: 20,
+    }),
+  ]);
+
+  return { query: term, accounts, contacts, deals, invoices, tasks, users };
+}
+
 export async function getAutomationData() {
   const { organizationId } = await resolveWorkspace();
   return Promise.all([

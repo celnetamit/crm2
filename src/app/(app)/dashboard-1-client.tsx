@@ -123,50 +123,70 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
     <div className="dashboard-grid-layout">
       {/* LEFT COLUMN: Sales Report Overview main panels */}
       <div className="dashboard-card-section">
-        {/* Row of KPI Cards */}
-        <div className="dashboard-kpi-row">
-          {/* Sales Revenue */}
-          <div className="kpi-metric-box blue">
-            <div className="kpi-metric-header">
-              <div className="kpi-metric-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </div>
-              <span className="kpi-metric-badge">{revenueDelta >= 0 ? "+" : ""}{revenueDelta}%</span>
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <div className="eyebrow">Workspace summary</div>
+              <h2>Top-line metrics</h2>
             </div>
-            <div className="kpi-metric-title">Booked Revenue</div>
-            <div className="kpi-metric-val">{formatVal(analytics.counts.totalDealsValue)}</div>
+            <div className="chip-row">
+              <span className="chip">{revenueDelta >= 0 ? "+" : ""}{revenueDelta}% revenue</span>
+              <span className="chip">{taskCompletionRate}% paid</span>
+              <span className="chip">{pipelineCoverage}% won</span>
+            </div>
           </div>
+          <table className="popular-items-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Booked revenue</td>
+                <td>{formatVal(analytics.counts.totalDealsValue)}</td>
+                <td>{revenueDelta >= 0 ? "+" : ""}{revenueDelta}%</td>
+              </tr>
+              <tr>
+                <td>Paid invoices</td>
+                <td>{formatVal(analytics.counts.paidInvoicesValue || 0)}</td>
+                <td>+{taskCompletionRate}%</td>
+              </tr>
+              <tr>
+                <td>Open pipeline</td>
+                <td>{analytics.counts.wonDeals + analytics.counts.openDeals} deals</td>
+                <td>{pipelineCoverage}% won</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
-          {/* Today Received */}
-          <div className="kpi-metric-box orange">
-            <div className="kpi-metric-header">
-              <div className="kpi-metric-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
-                  <path d="M6 12h.01M18 12h.01" />
-                </svg>
-              </div>
-              <span className="kpi-metric-badge">+{taskCompletionRate}%</span>
+        <div className="glass-card">
+          <div className="glass-card-header">
+            <div className="glass-card-title">
+              <h3>Where to find everything</h3>
+              <span>Use these shortcuts when you need a customer, a person, a follow-up, or a teammate invite.</span>
             </div>
-            <div className="kpi-metric-title">Paid Invoices</div>
-            <div className="kpi-metric-val">{formatVal(analytics.counts.paidInvoicesValue || 0)}</div>
           </div>
-
-          {/* Sales Total */}
-          <div className="kpi-metric-box red">
-            <div className="kpi-metric-header">
-              <div className="kpi-metric-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" />
-                </svg>
-              </div>
-              <span className="kpi-metric-badge">{pipelineCoverage}% won</span>
-            </div>
-            <div className="kpi-metric-title">Open Pipeline</div>
-            <div className="kpi-metric-val">{analytics.counts.wonDeals + analytics.counts.openDeals} Deals</div>
+          <div className="account-facts-grid">
+            <Link href="/customers" className="nested-card">
+              <strong>Customers</strong>
+              <div className="deal-meta">Open the customer list, create a new customer, and manage the account profile.</div>
+            </Link>
+            <Link href="/customers" className="nested-card">
+              <strong>People</strong>
+              <div className="deal-meta">Add and edit people inside a customer record.</div>
+            </Link>
+            <Link href="/follow-ups" className="nested-card">
+              <strong>Follow-ups</strong>
+              <div className="deal-meta">Track reminders, next steps, and task ownership.</div>
+            </Link>
+            <Link href="/team#invite-member" className="nested-card">
+              <strong>Team</strong>
+              <div className="deal-meta">Invite people to use the platform and manage their access.</div>
+            </Link>
           </div>
         </div>
 
@@ -390,7 +410,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
               <div className="nested-card" style={{ display: "grid", gap: "10px" }}>
                 <div>
                   <div className="eyebrow">Account</div>
-                  <Link href={`/accounts/${selectedDetail.item.account.id}`} style={{ fontWeight: 700 }}>
+                  <Link href={`/customers/${selectedDetail.item.account.id}`} style={{ fontWeight: 700 }}>
                     {selectedDetail.item.account.name}
                   </Link>
                 </div>
@@ -402,7 +422,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
                   <div className="eyebrow">Value</div>
                   <div style={{ fontWeight: 800 }}>{formatVal(selectedDetail.item.value ?? 0)}</div>
                 </div>
-                <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+                <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                   View in details
                 </Link>
               </div>
@@ -427,7 +447,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
                   <div className="eyebrow">Next review</div>
                   <div>{selectedDetail.item.nextReviewAt ? new Date(selectedDetail.item.nextReviewAt).toLocaleDateString() : "Due now"}</div>
                 </div>
-                <Link href={`/accounts/${selectedDetail.item.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+                <Link href={`/customers/${selectedDetail.item.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                   View in details
                 </Link>
               </div>
@@ -528,7 +548,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
                 <option value="value-low">Lowest value</option>
                 <option value="status">Status</option>
               </select>
-              <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 View all deals
               </Link>
             </div>
@@ -553,7 +573,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
                     <div className="deal-meta">Updated {new Date(deal.updatedAt).toLocaleDateString()}</div>
                   </td>
                   <td>
-                    <Link href={`/accounts/${deal.account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
+                    <Link href={`/customers/${deal.account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
                       {deal.account.name}
                     </Link>
                   </td>
@@ -587,7 +607,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
           <div className="glass-card-header">
             <div className="glass-card-title">
               <h3>Executive Review Queue</h3>
-              <span>Accounts that need attention or a scheduled review</span>
+              <span>Customers that need attention or a scheduled review</span>
             </div>
             <div className="table-toolbar">
               <select className="select select-compact" value={reviewFilter} onChange={(event) => setReviewFilter(event.target.value as typeof reviewFilter)}>
@@ -623,7 +643,7 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
                 return (
                   <tr key={account.id}>
                     <td>
-                      <Link href={`/accounts/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
+                      <Link href={`/customers/${account.id}`} style={{ color: "var(--text)", fontWeight: 700 }}>
                         {account.name}
                       </Link>
                     </td>
@@ -650,14 +670,14 @@ export default function Dashboard1Client({ session, data, analytics }: Dashboard
               {filteredReviews.length === 0 && (
                 <tr>
                   <td colSpan={6}>
-                    <div className="empty-state">No accounts need review right now.</div>
+                    <div className="empty-state">No customers need review right now.</div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
           <div style={{ paddingTop: "12px" }}>
-            <Link href="/accounts?view=review-needed" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+            <Link href="/customers?view=review-needed" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
               Open review view
             </Link>
           </div>

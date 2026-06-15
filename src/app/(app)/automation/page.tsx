@@ -138,7 +138,7 @@ export default async function AutomationPage() {
               <div className="deal-meta">Delivery history</div>
             </article>
             <article className="metric-card">
-              <div className="eyebrow">Members</div>
+              <div className="eyebrow">Team</div>
               <div className="metric-value">{members.length}</div>
               <div className="deal-meta">Recipients available</div>
             </article>

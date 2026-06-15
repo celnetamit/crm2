@@ -151,33 +151,51 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
     <div className="dashboard-grid-layout">
       {/* LEFT COLUMN */}
       <div className="dashboard-card-section">
-        {/* KPI Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
-          {/* Customers */}
-          <div className="mini-card">
-            <span>Customers</span>
-            <strong>{totalCustomers}</strong>
-            <span className="trend">+14.5%</span>
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <div className="eyebrow">Workspace summary</div>
+              <h2>Core metrics</h2>
+            </div>
+            <div className="chip-row">
+              <span className="chip">{totalCustomers} customers</span>
+              <span className="chip">{formatVal(totalRevenueVal)} revenue</span>
+              <span className="chip">{formatVal(totalInvoicesVal)} invoices</span>
+              <span className="chip">{profitPercentage}% margin</span>
+            </div>
           </div>
-          {/* Revenue */}
-          <div className="mini-card">
-            <span>Revenue</span>
-            <strong>{formatVal(totalRevenueVal)}</strong>
-            <span className="trend">+12.4%</span>
-          </div>
-          {/* Invoices */}
-          <div className="mini-card">
-            <span>Invoices</span>
-            <strong>{formatVal(totalInvoicesVal)}</strong>
-            <span className="trend">+8.2%</span>
-          </div>
-          {/* Profit */}
-          <div className="mini-card">
-            <span>Profit Margin</span>
-            <strong>{profitPercentage}%</strong>
-            <span className="trend">+4.5%</span>
-          </div>
-        </div>
+          <table className="popular-items-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Customers</td>
+                <td>{totalCustomers}</td>
+                <td>+14.5%</td>
+              </tr>
+              <tr>
+                <td>Revenue</td>
+                <td>{formatVal(totalRevenueVal)}</td>
+                <td>+12.4%</td>
+              </tr>
+              <tr>
+                <td>Invoices</td>
+                <td>{formatVal(totalInvoicesVal)}</td>
+                <td>+8.2%</td>
+              </tr>
+              <tr>
+                <td>Profit margin</td>
+                <td>{profitPercentage}%</td>
+                <td>+4.5%</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
         {/* Opportunities by User Spline Chart */}
           <div className="glass-card">
@@ -314,7 +332,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
             <div className="glass-card-header">
               <div className="glass-card-title">
                 <h3>Lead Source</h3>
-                <span>Live source mix from account records</span>
+                <span>Live source mix from customer records</span>
               </div>
             </div>
 
@@ -442,7 +460,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
               </tbody>
             </table>
             <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-              <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 Open pipeline
               </Link>
             </div>
@@ -453,12 +471,12 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
         <div className="glass-card">
           <div className="glass-card-header">
             <div className="glass-card-title">
-              <h3>Accounts Needing Review</h3>
-              <span>Live accounts pulled from the database</span>
+              <h3>Customers Needing Review</h3>
+              <span>Live customers pulled from the database</span>
             </div>
             <div className="table-toolbar">
               <select className="select select-compact" value={reviewFilter} onChange={(event) => setReviewFilter(event.target.value as typeof reviewFilter)}>
-                <option value="all">All accounts</option>
+                <option value="all">All customers</option>
                 <option value="healthy">Healthy</option>
                 <option value="watch">Watch</option>
                 <option value="risk">At risk</option>
@@ -493,7 +511,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
                 return (
                   <tr key={acc.id}>
                     <td>
-                      <Link href={`/accounts/${acc.id}`} className="popular-product-cell" style={{ color: "inherit" }}>
+                      <Link href={`/customers/${acc.id}`} className="popular-product-cell" style={{ color: "inherit" }}>
                         <div className="popular-product-thumb">{textInitial}</div>
                         <div>
                           <div className="popular-product-name">{acc.name}</div>
@@ -523,7 +541,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
                       <span className={`badge ${statusClass}`}>{acc.status}</span>
                     </td>
                     <td>
-                      <Link href={`/accounts/${acc.id}`} className="secondary-button" style={{ padding: "6px 10px", fontSize: "0.78rem" }}>
+                      <Link href={`/customers/${acc.id}`} className="secondary-button" style={{ padding: "6px 10px", fontSize: "0.78rem" }}>
                         Open
                       </Link>
                     </td>
@@ -538,9 +556,9 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
             </tbody>
           </table>
           <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-            <Link href="/accounts?view=review-needed" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
-              Review accounts
-            </Link>
+              <Link href="/customers?view=review-needed" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              Review customers
+              </Link>
           </div>
         </div>
       </div>
@@ -551,7 +569,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
           <div className="glass-card-header">
             <div className="glass-card-title">
               <h3>Details Drawer</h3>
-              <span>Quick drill-down for owners, stages, and accounts</span>
+              <span>Quick drill-down for owners, stages, and customers</span>
             </div>
             {selectedInsight && (
               <button type="button" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.8rem" }} onClick={() => setSelectedInsight(null)}>
@@ -576,7 +594,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
                 <span className="badge status-active">{Math.round(((selectedOwner?.wonCount ?? 0) / Math.max(selectedOwner?.count ?? 0, 1)) * 100)}% win rate</span>
                 <span className="badge">{formatVal(selectedOwner?.value ?? 0)}</span>
               </div>
-              <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+              <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                 View in details
               </Link>
             </div>
@@ -589,7 +607,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
                 <span className="badge status-active">{selectedStage?.share ?? 0}% of open pipeline</span>
                 <span className="badge">{formatVal(selectedStage?.value ?? 0)}</span>
               </div>
-              <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+              <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                 View in details
               </Link>
             </div>
@@ -604,7 +622,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
                 </span>
                 <span className={`badge ${selectedAccount?.status === "AT_RISK" ? "status-overdue" : "status-active"}`}>{selectedAccount?.status ?? "OPEN"}</span>
               </div>
-              <Link href={`/accounts/${selectedAccount?.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
+              <Link href={`/customers/${selectedAccount?.id}`} className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem", width: "fit-content" }}>
                 View in details
               </Link>
             </div>
@@ -667,7 +685,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
           <div className="glass-card-header">
             <div className="glass-card-title">
               <h3>Industry Mix</h3>
-              <span>Top industries from account records</span>
+              <span>Top industries from customer records</span>
             </div>
           </div>
 
@@ -750,7 +768,7 @@ export default function Dashboard2Client({ session, data, analytics }: Dashboard
               </tbody>
             </table>
             <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end" }}>
-              <Link href="/deals" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
+              <Link href="/sales" className="secondary-button" style={{ padding: "8px 12px", fontSize: "0.82rem" }}>
                 View deal owners
               </Link>
             </div>

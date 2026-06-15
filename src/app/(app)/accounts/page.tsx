@@ -27,6 +27,7 @@ import {
   toDateInputValue,
 } from "@/lib/account-profile";
 import { CsvImportTools } from "@/components/csv-import-tools";
+import { HelpTip } from "@/components/help-tip";
 
 type AccountsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -34,6 +35,13 @@ type AccountsPageProps = {
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+type WorkspaceTab = "customers" | "people" | "manage";
+
+function normalizeTab(value: string | undefined): WorkspaceTab {
+  if (value === "people" || value === "manage") return value;
+  return "customers";
 }
 
 const lifecycleOptions = [
@@ -50,6 +58,7 @@ const lifecycleOptions = [
 
 export default async function AccountsPage({ searchParams }: AccountsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const activeTab = normalizeTab(firstValue(resolvedSearchParams.tab));
   const filters = {
     query: firstValue(resolvedSearchParams.q) ?? "",
     status: firstValue(resolvedSearchParams.status) ?? "",
@@ -68,63 +77,45 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
     getAccountTeamOptions(),
   ]);
   const canManage = session.role !== "MEMBER";
+  const peopleRows = accounts.flatMap((account) =>
+    account.contacts.map((contact) => ({
+      account,
+      contact,
+    })),
+  );
+
+  function buildTabHref(tab: WorkspaceTab) {
+    const params = new URLSearchParams();
+    if (filters.query) params.set("q", filters.query);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.lifecycleStage) params.set("lifecycleStage", filters.lifecycleStage);
+    if (filters.segment) params.set("segment", filters.segment);
+    if (filters.ownerUserId) params.set("ownerUserId", filters.ownerUserId);
+    if (filters.view) params.set("view", filters.view);
+    const basePath =
+      tab === "people" ? "/accounts/people" : tab === "manage" ? "/accounts/manage" : "/accounts";
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  }
 
   return (
     <div className="page-grid">
-      <section className="hero-panel dashboard-hero">
-        <div className="hero-body">
-          <div className="hero-copy">
-            <div className="eyebrow">Accounts</div>
-            <h2>Customer profiling workspace</h2>
-            <p>
-              Search the book of business, segment customers by lifecycle stage, and move from overview into a full
-              profile with people, revenue, follow-ups, and history.
-            </p>
-          </div>
-          <div className="hero-actions">
-            <div className="chip">{accounts.length} matching accounts</div>
-            <div className="chip">
-              {accounts.reduce((sum, account) => sum + account._count.contacts, 0)} mapped contacts
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">Customers</div>
+            <h2>Customer index</h2>
+            <div className="deal-meta">
+              Search customer records, switch to People, or open Manage for imports and bulk updates.
             </div>
-            <div className="chip">{savedViews.length} saved views</div>
+          </div>
+          <div className="chip-row">
+            <span className="chip">{accounts.length} customers</span>
+            <span className="chip">{accounts.reduce((sum, account) => sum + account._count.contacts, 0)} people</span>
+            <span className="chip">{savedViews.length} saved views</span>
+            <span className="chip">{teamOptions.length} owners</span>
           </div>
         </div>
-        <aside className="hero-rail">
-          <article className="profile-panel">
-            <div className="profile-head">
-              <div className="profile-avatar">A</div>
-              <div className="profile-copy">
-                <h3>Profiling cockpit</h3>
-                <span>Search, filter, and bulk update customer records.</span>
-              </div>
-            </div>
-            <div className="profile-meta">
-              <div className="deal-meta">Current scope</div>
-              <div className="profile-track">
-                <span style={{ width: "64%" }} />
-              </div>
-              <div className="deal-meta">
-                {filters.view
-                  ? `Saved view: ${savedViews.find((view) => view.id === filters.view)?.name ?? filters.view}`
-                  : "All accounts"}
-              </div>
-            </div>
-            <div className="profile-stats">
-              <div className="profile-stat">
-                <strong>{savedViews.length}</strong>
-                <span>Views</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{teamOptions.length}</strong>
-                <span>Owners</span>
-              </div>
-              <div className="profile-stat">
-                <strong>{options.segments.length}</strong>
-                <span>Segments</span>
-              </div>
-            </div>
-          </article>
-        </aside>
       </section>
 
       <section className="panel">
@@ -163,11 +154,13 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                 name="q"
                 className="input"
                 defaultValue={filters.query}
-                placeholder="Account, industry, source, contact..."
+                placeholder="Customer, person, industry, notes..."
               />
             </label>
             <label className="field">
-              <span>Status</span>
+              <span>
+                Status <HelpTip label="Filter customers by lifecycle state: active, at risk, or prospect." />
+              </span>
               <select name="status" className="select" defaultValue={filters.status}>
                 <option value="">All statuses</option>
                 <option value="ACTIVE">Active</option>
@@ -178,7 +171,9 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           </div>
           <div className="two-up">
             <label className="field">
-              <span>Lifecycle stage</span>
+              <span>
+                Lifecycle stage <HelpTip label="Choose where the customer is in the relationship: lead, onboarding, active, renewal, or churn risk." />
+              </span>
               <select name="lifecycleStage" className="select" defaultValue={filters.lifecycleStage}>
                 <option value="">All lifecycle stages</option>
                 {Array.from(new Set([...lifecycleOptions, ...options.lifecycleStages])).map((stage) => (
@@ -189,7 +184,9 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
               </select>
             </label>
             <label className="field">
-              <span>Segment</span>
+              <span>
+                Segment <HelpTip label="Filter by customer segment such as enterprise, SMB, or a custom tag group." />
+              </span>
               <select name="segment" className="select" defaultValue={filters.segment}>
                 <option value="">All segments</option>
                 {options.segments.map((segment) => (
@@ -202,7 +199,9 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           </div>
           <div className="two-up">
             <label className="field">
-              <span>Account owner</span>
+              <span>
+                Customer owner <HelpTip label="Limit the list to customers assigned to one teammate." />
+              </span>
               <select name="ownerUserId" className="select" defaultValue={filters.ownerUserId}>
                 <option value="">All owners</option>
                 {teamOptions.map((member) => (
@@ -228,11 +227,173 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
             <button type="submit" className="primary-button">
               Apply filters
             </button>
-            <Link href="/accounts" className="secondary-button">
+            <Link href="/customers" className="secondary-button">
               Reset
             </Link>
           </div>
         </form>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header workspace-header">
+          <div>
+            <div className="eyebrow">Views</div>
+            <h2>Tabbed table workspace</h2>
+          </div>
+          <div className="workspace-tabs" role="tablist" aria-label="Workspace tabs">
+            <Link href={buildTabHref("customers")} className={`workspace-tab${activeTab === "customers" ? " is-active" : ""}`} aria-current={activeTab === "customers" ? "page" : undefined}>
+              <span>Customers</span>
+              <span className="workspace-tab-count">{accounts.length}</span>
+            </Link>
+            <Link href={buildTabHref("people")} className={`workspace-tab${activeTab === "people" ? " is-active" : ""}`} aria-current={activeTab === "people" ? "page" : undefined}>
+              <span>People</span>
+              <span className="workspace-tab-count">{peopleRows.length}</span>
+            </Link>
+            {canManage ? (
+              <Link href={buildTabHref("manage")} className={`workspace-tab${activeTab === "manage" ? " is-active" : ""}`} aria-current={activeTab === "manage" ? "page" : undefined}>
+                <span>Manage</span>
+                <span className="workspace-tab-count">Tools</span>
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        {activeTab === "customers" ? (
+          <div className="stack">
+            <div className="deal-meta">Customers table. Use the actions to open detail pages, edit anchors, or filtered follow-ups.</div>
+            <table className="popular-items-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>People</th>
+                  <th>Health</th>
+                  <th>Review</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((account) => {
+                  const profileCompleteness = getProfileCompleteness(account);
+                  const healthTone = getHealthTone(account.healthScore);
+                  return (
+                    <tr key={account.id}>
+                      <td>
+                        <div className="table-main-cell">
+                          <strong>{account.name}</strong>
+                          <div className="deal-meta">{account.industry ?? "Unspecified industry"}</div>
+                        </div>
+                      </td>
+                      <td><div className="deal-meta">{account.owner?.name ?? "Unassigned"}</div></td>
+                      <td>
+                        <span className={`badge status-${account.status.toLowerCase()}`}>{account.status}</span>
+                        <div className="deal-meta">{account.lifecycleStage ?? "No stage"}</div>
+                      </td>
+                      <td>
+                        <strong>{account._count.contacts}</strong>
+                        <div className="deal-meta">{account._count.tasks} follow-ups</div>
+                      </td>
+                      <td>
+                        <span className={`badge status-${healthTone}`}>Health {account.healthScore ?? "N/A"}</span>
+                        <div className="deal-meta">{profileCompleteness}% complete</div>
+                      </td>
+                      <td><div className="deal-meta">{formatDate(account.nextReviewAt)}</div></td>
+                      <td>
+                        <div className="table-action-group">
+                          <Link href={`/customers/${account.id}`} className="secondary-button table-action-button">Detail</Link>
+                          <Link href={`/customers/${account.id}#edit-customer`} className="secondary-button table-action-button">Edit</Link>
+                          <Link href={`/follow-ups?accountId=${account.id}`} className="secondary-button table-action-button">Follow-ups</Link>
+                          <details className="table-more">
+                            <summary className="secondary-button table-action-button">More</summary>
+                            <div className="table-more-menu">
+                              <Link href={`/deals?accountId=${account.id}`}>Deals</Link>
+                              <Link href={`/billing?accountId=${account.id}`}>Billing</Link>
+                              <Link href={`/customers/${account.id}#people`}>People</Link>
+                            </div>
+                          </details>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {accounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state">No customers match these filters yet.</div>
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {activeTab === "people" ? (
+          <div className="stack">
+            <div className="deal-meta">People table. Use the actions to jump to the customer, edit the person, or open follow-ups.</div>
+            <table className="popular-items-table">
+              <thead>
+                <tr>
+                  <th>Person</th>
+                  <th>Customer</th>
+                  <th>Role</th>
+                  <th>Contact</th>
+                  <th>Last contacted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {peopleRows.map(({ account, contact }) => (
+                  <tr key={contact.id}>
+                    <td>
+                      <div className="table-main-cell">
+                        <strong>{contact.name}</strong>
+                        <div className="deal-meta">{contact.title ?? "No title"}</div>
+                      </div>
+                    </td>
+                    <td><Link href={`/customers/${account.id}`} className="table-link">{account.name}</Link></td>
+                    <td>
+                      <div className="deal-meta">{contact.role}</div>
+                      <div className="deal-meta">{contact.department ?? "No department"}</div>
+                    </td>
+                    <td>
+                      <div className="deal-meta">{contact.email ?? "No email"}</div>
+                      <div className="deal-meta">{contact.phone ?? "No phone"}</div>
+                    </td>
+                    <td><div className="deal-meta">{formatDate(contact.lastContactedAt)}</div></td>
+                    <td>
+                      <div className="table-action-group">
+                        <Link href={`/customers/${account.id}`} className="secondary-button table-action-button">Detail</Link>
+                        <Link href={`/customers/${account.id}#person-${contact.id}`} className="secondary-button table-action-button">Edit</Link>
+                        <Link href={`/follow-ups?contactId=${contact.id}`} className="secondary-button table-action-button">Follow-ups</Link>
+                        <details className="table-more">
+                          <summary className="secondary-button table-action-button">More</summary>
+                          <div className="table-more-menu">
+                            {contact.email ? <a href={`mailto:${contact.email}`}>Email</a> : null}
+                            {contact.linkedinUrl ? (
+                              <a href={contact.linkedinUrl} target="_blank" rel="noreferrer">
+                                LinkedIn
+                              </a>
+                            ) : null}
+                            <Link href={`/customers/${account.id}#people`}>Customer people</Link>
+                          </div>
+                        </details>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {peopleRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="empty-state">No people match these filters yet.</div>
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </section>
 
       {canManage ? (
@@ -247,21 +408,21 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
             <div className="stack">
               <div className="inline-actions">
                 <Link href="/api/accounts/export" className="secondary-button">
-                  Export accounts CSV
+                  Export customers CSV
                 </Link>
                 <Link href="/api/contacts/export" className="secondary-button">
-                  Export contacts CSV
+                  Export people CSV
                 </Link>
                 <Link href="/api/accounts/template" className="secondary-button">
-                  Accounts template
+                  Customers template
                 </Link>
                 <Link href="/api/contacts/template" className="secondary-button">
-                  Contacts template
+                  People template
                 </Link>
               </div>
               <div className="deal-meta">
-                Account import expects columns like `name`, `status`, `lifecycleStage`, `segment`, `customFields`,
-                and `notes`. Contact import expects `accountName`, `name`, `role`, and optional contact profile
+                Customer import expects columns like `name`, `status`, `lifecycleStage`, `segment`, `customFields`,
+                and `notes`. People import expects `accountName`, `name`, `role`, and optional profile
                 fields.
               </div>
             </div>
@@ -319,7 +480,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
               </label>
             </div>
             <div className="deal-meta">
-              Tick the accounts below, then update owner fields and/or tags in one pass.
+              Tick the customers below, then update owner fields and/or tags in one pass.
             </div>
             <div className="inline-actions">
               <button type="submit" className="primary-button">
@@ -402,7 +563,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                   </div>
                   <div className="nested-card">
                     <strong>Relationship map</strong>
-                    <div className="row-card-value">{account._count.contacts} contacts</div>
+                    <div className="row-card-value">{account._count.contacts} people</div>
                     <div className="deal-meta">
                       {account._count.deals} deals · {account._count.tasks} tasks · {account._count.invoices} invoices
                     </div>
@@ -439,7 +600,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
                 <div className="account-sections-grid">
                   <div className="stack">
-                    <strong className="section-label">Key contacts</strong>
+                    <strong className="section-label">Key people</strong>
                     {account.contacts.slice(0, 3).map((contact) => (
                       <article key={contact.id} className="nested-card">
                         <div className="row-card-top">
@@ -453,7 +614,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                             {contact.influenceLevel ? (
                               <span className="badge status-warning">{contact.influenceLevel}</span>
                             ) : null}
-                            <span className="badge status-draft">CONTACT</span>
+                            <span className="badge status-draft">PERSON</span>
                           </div>
                         </div>
                         <div className="deal-meta">
@@ -463,11 +624,11 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
                         {canManage ? (
                           <details className="edit-block">
-                            <summary>Edit contact</summary>
+                            <summary>Edit person</summary>
                             <form action={updateContactAction} className="stack compact-form">
                               <input type="hidden" name="contactId" value={contact.id} />
                               <label className="field">
-                                <span>Account</span>
+                                <span>Customer</span>
                                 <select name="accountId" className="select" defaultValue={account.id}>
                                   {accountDirectory.map((candidate) => (
                                     <option key={candidate.id} value={candidate.id}>
@@ -540,7 +701,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                         ) : null}
                       </article>
                     ))}
-                    {account.contacts.length === 0 ? <div className="empty-state">No contacts on this account.</div> : null}
+                  {account.contacts.length === 0 ? <div className="empty-state">No people on this customer yet.</div> : null}
                   </div>
 
                   <div className="stack">
@@ -561,7 +722,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                       </div>
                     </div>
                     <div className="inline-actions">
-                      <Link href={`/accounts/${account.id}`} className="primary-button">
+                      <Link href={`/customers/${account.id}`} className="primary-button">
                         Open full profile
                       </Link>
                     </div>
@@ -570,12 +731,12 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
                 {canManage ? (
                   <details className="edit-block">
-                    <summary>Edit account profile</summary>
+                    <summary>Edit customer profile</summary>
                     <form action={updateAccountAction} className="stack compact-form">
                       <input type="hidden" name="accountId" value={account.id} />
                       <div className="two-up">
                         <label className="field">
-                          <span>Account owner</span>
+                          <span>Customer owner</span>
                           <select name="ownerUserId" className="select" defaultValue={account.owner?.id ?? ""}>
                             <option value="">Unassigned</option>
                             {teamOptions.map((member) => (
@@ -674,14 +835,14 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                       </label>
                       <div className="inline-actions">
                         <button type="submit" className="secondary-button">
-                          Save account
+                          Save customer
                         </button>
                       </div>
                     </form>
                     <form action={deleteAccountAction} className="inline-actions danger-row">
                       <input type="hidden" name="accountId" value={account.id} />
                       <button type="submit" className="danger-button" disabled={account._count.invoices > 0}>
-                        Delete account
+                        Delete customer
                       </button>
                       {account._count.invoices > 0 ? (
                         <span className="deal-meta">Remove invoices first before deleting.</span>
@@ -692,7 +853,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
               </article>
             );
           })}
-          {accounts.length === 0 ? <div className="empty-state">No accounts match these filters yet.</div> : null}
+          {accounts.length === 0 ? <div className="empty-state">No customers match these filters yet.</div> : null}
         </div>
       </section>
 
@@ -700,14 +861,14 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <div className="eyebrow">Create account</div>
+              <div className="eyebrow">Create customer</div>
               <h2>New customer profile</h2>
             </div>
           </div>
           <form action={createAccountAction} className="stack">
             <div className="two-up">
               <label className="field">
-                <span>Account owner</span>
+                <span>Customer owner</span>
                 <select name="ownerUserId" className="select" defaultValue="">
                   <option value="">Unassigned</option>
                   {teamOptions.map((member) => (
@@ -804,7 +965,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
               <textarea name="notes" className="textarea" rows={4} placeholder="Context for the team..." />
             </label>
             <button type="submit" className="primary-button full">
-              Create account
+              Create customer
             </button>
           </form>
         </section>
@@ -812,16 +973,16 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <div className="eyebrow">Add contact</div>
+              <div className="eyebrow">Add person</div>
               <h2>Relationship profile</h2>
             </div>
           </div>
           <form action={createContactAction} className="stack">
             <label className="field">
-              <span>Account</span>
+              <span>Customer</span>
               <select name="accountId" className="select" required defaultValue="">
                 <option value="" disabled>
-                  Select account
+                  Select customer
                 </option>
                 {accountDirectory.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -884,7 +1045,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
               />
             </label>
             <button type="submit" className="primary-button full">
-              Create contact
+              Create person
             </button>
           </form>
         </section>
