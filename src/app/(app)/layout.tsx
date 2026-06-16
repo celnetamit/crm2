@@ -24,13 +24,8 @@ export default async function AppLayout({
           organizations={organizations}
           currentOrganizationId={session.organizationId}
           onSubmitAction={switchOrganizationAction}
+          onLogoutAction={logoutAction}
         />
-
-        <form action={logoutAction} className="app-topbar-signout">
-          <button className="secondary-button" type="submit">
-            Sign out
-          </button>
-        </form>
       </header>
 
       <main className="workspace">

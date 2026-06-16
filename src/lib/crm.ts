@@ -330,9 +330,13 @@ async function createAccountCommentRevision(params: {
 }
 
 async function resolveWorkspace(): Promise<WorkspaceContext> {
-  await ensureSeedData();
+  // Read the session first. Accessing cookies() opts the route into dynamic
+  // rendering, so during a build-time prerender Next bails out here before we
+  // ever touch the database. Seeding before this point caused prerender to fail
+  // with a DB connection error when no database is available at build time.
   const session = await getSession();
   if (!session) redirect("/login");
+  await ensureSeedData();
 
   const membership = await prisma.membership.findFirst({
     where: {

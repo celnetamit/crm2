@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { OrganizationSwitcher } from "@/components/org-switcher";
@@ -16,6 +17,7 @@ type AppNavProps = {
   organizations: OrganizationItem[];
   currentOrganizationId: string;
   onSubmitAction: (formData: FormData) => void | Promise<void>;
+  onLogoutAction: (formData: FormData) => void | Promise<void>;
 };
 
 type MenuItem = {
@@ -78,7 +80,7 @@ const menuGroups: MenuGroup[] = [
   },
 ];
 
-function iconPath(name: "home" | "plus" | "bell" | "user" | "chev") {
+function iconPath(name: "home" | "plus" | "bell" | "user" | "chev" | "menu" | "close") {
   switch (name) {
     case "home":
       return <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" />;
@@ -101,6 +103,10 @@ function iconPath(name: "home" | "plus" | "bell" | "user" | "chev") {
       );
     case "chev":
       return <path d="m8 10 4 4 4-4" />;
+    case "menu":
+      return <path d="M4 7h16M4 12h16M4 17h16" />;
+    case "close":
+      return <path d="m6 6 12 12M18 6 6 18" />;
   }
 }
 
@@ -112,7 +118,7 @@ function MenuChevron() {
   );
 }
 
-function IconButton({ name }: { name: "home" | "plus" | "bell" | "user" }) {
+function IconButton({ name }: { name: "home" | "plus" | "bell" | "user" | "menu" | "close" }) {
   return (
     <svg viewBox="0 0 24 24" className="topnav-icon" aria-hidden="true">
       {iconPath(name)}
@@ -129,82 +135,109 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppNav({ organizations, currentOrganizationId, onSubmitAction }: AppNavProps) {
+export function AppNav({ organizations, currentOrganizationId, onSubmitAction, onLogoutAction }: AppNavProps) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  const closeMenu = () => setOpen(false);
 
   return (
     <div className="topnav-shell">
-      <div className="topnav-left">
-        <Link href="/dashboard" className="topnav-home" aria-label="Dashboard">
-          <IconButton name="home" />
-        </Link>
+      <button
+        type="button"
+        className="topnav-burger"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        aria-controls="topnav-collapse"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <IconButton name={open ? "close" : "menu"} />
+      </button>
 
-        <div className="topnav-menu-row">
-          {menuGroups.map((group) => {
-            const active = isActivePath(pathname, group.href);
-            return (
-              <details key={group.href} className={`topnav-menu${active ? " is-active" : ""}`}>
-                <summary className="topnav-menu-summary">
-                  <span>{group.label}</span>
-                  <MenuChevron />
-                </summary>
-                <div className="topnav-dropdown">
-                  {group.items.map((item) => (
-                    <Link key={`${group.href}:${item.href}:${item.label}`} href={item.href} className="topnav-dropdown-item">
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            );
-          })}
-        </div>
-      </div>
+      <div id="topnav-collapse" className={`topnav-collapse${open ? " is-open" : ""}`}>
+        <div className="topnav-left">
+          <Link href="/dashboard" className="topnav-home" aria-label="Dashboard" onClick={closeMenu}>
+            <IconButton name="home" />
+          </Link>
 
-      <div className="topnav-right">
-        <OrganizationSwitcher
-          organizations={organizations}
-          currentOrganizationId={currentOrganizationId}
-          onSubmitAction={onSubmitAction}
-        />
-
-        <form action="/search" method="get" className="topnav-search">
-          <label className="sr-only" htmlFor="workspace-search">
-            Search workspace
-          </label>
-          <input id="workspace-search" name="q" className="topnav-search-input" placeholder="Search..." />
-        </form>
-
-        <details className="topnav-action-menu">
-          <summary className="topnav-action-button" aria-label="Create new">
-            <IconButton name="plus" />
-          </summary>
-          <div className="topnav-dropdown topnav-dropdown-right">
-            <Link href="/customers/manage" className="topnav-dropdown-item">
-              Create customer
-            </Link>
-            <Link href="/deals/manage" className="topnav-dropdown-item">
-              Create deal
-            </Link>
-            <Link href="/follow-ups" className="topnav-dropdown-item">
-              Create follow-up
-            </Link>
-            <Link href="/billing/manage" className="topnav-dropdown-item">
-              Create invoice
-            </Link>
-            <Link href="/settings/invites" className="topnav-dropdown-item">
-              Invite user
-            </Link>
+          <div className="topnav-menu-row">
+            {menuGroups.map((group) => {
+              const active = isActivePath(pathname, group.href);
+              return (
+                <details key={group.href} className={`topnav-menu${active ? " is-active" : ""}`}>
+                  <summary className="topnav-menu-summary">
+                    <span>{group.label}</span>
+                    <MenuChevron />
+                  </summary>
+                  <div className="topnav-dropdown">
+                    {group.items.map((item) => (
+                      <Link
+                        key={`${group.href}:${item.href}:${item.label}`}
+                        href={item.href}
+                        className="topnav-dropdown-item"
+                        onClick={closeMenu}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
           </div>
-        </details>
+        </div>
 
-        <button type="button" className="topnav-icon-button" aria-label="Notifications">
-          <IconButton name="bell" />
-        </button>
+        <div className="topnav-right">
+          <OrganizationSwitcher
+            organizations={organizations}
+            currentOrganizationId={currentOrganizationId}
+            onSubmitAction={onSubmitAction}
+          />
 
-        <Link href="/settings" className="topnav-profile" aria-label="Open team and settings">
-          <IconButton name="user" />
-        </Link>
+          <form action="/search" method="get" className="topnav-search">
+            <label className="sr-only" htmlFor="workspace-search">
+              Search workspace
+            </label>
+            <input id="workspace-search" name="q" className="topnav-search-input" placeholder="Search..." />
+          </form>
+
+          <details className="topnav-action-menu">
+            <summary className="topnav-action-button" aria-label="Create new">
+              <IconButton name="plus" />
+            </summary>
+            <div className="topnav-dropdown topnav-dropdown-right">
+              <Link href="/customers/manage" className="topnav-dropdown-item" onClick={closeMenu}>
+                Create customer
+              </Link>
+              <Link href="/deals/manage" className="topnav-dropdown-item" onClick={closeMenu}>
+                Create deal
+              </Link>
+              <Link href="/follow-ups" className="topnav-dropdown-item" onClick={closeMenu}>
+                Create follow-up
+              </Link>
+              <Link href="/billing/manage" className="topnav-dropdown-item" onClick={closeMenu}>
+                Create invoice
+              </Link>
+              <Link href="/settings/invites" className="topnav-dropdown-item" onClick={closeMenu}>
+                Invite user
+              </Link>
+            </div>
+          </details>
+
+          <button type="button" className="topnav-icon-button" aria-label="Notifications">
+            <IconButton name="bell" />
+          </button>
+
+          <Link href="/settings" className="topnav-profile" aria-label="Open team and settings" onClick={closeMenu}>
+            <IconButton name="user" />
+          </Link>
+
+          <form action={onLogoutAction} className="topnav-signout">
+            <button className="secondary-button" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
